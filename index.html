@@ -12,13 +12,22 @@
 <body>
     <div class="container">
         <header>
-            <h1>Weather</h1>
+            <div class="header-row">
+                <h1>Weather</h1>
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                    <span class="theme-icon">☀️</span>
+                </button>
+            </div>
             <p class="location" id="location">Detecting location...</p>
         </header>
         
         <main>
             <div class="current-weather" id="current">
                 <div class="loader"></div>
+            </div>
+            
+            <div class="snow-conditions" id="snow" style="display: none;">
+                <!-- Snow conditions will be inserted here -->
             </div>
             
             <div class="forecast" id="forecast">

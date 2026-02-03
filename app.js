@@ -54,7 +54,35 @@ const weatherConditions = {
 };
 
 const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const shortDayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+// Theme management
+function initTheme() {
+    const saved = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const theme = saved || (prefersDark ? 'dark' : 'light');
+    setTheme(theme);
+}
+
+function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+    updateThemeIcon(theme);
+}
+
+function updateThemeIcon(theme) {
+    const icon = document.querySelector('.theme-icon');
+    if (icon) {
+        icon.textContent = theme === 'light' ? '🌙' : '☀️';
+    }
+}
+
+function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+}
 
 // Get user location
 async function getLocation() {
@@ -72,9 +100,9 @@ async function getLocation() {
     });
 }
 
-// Fetch weather data from Open-Meteo
+// Fetch weather data from Open-Meteo (including snow data)
 async function fetchWeather(lat, lon) {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=4`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,snowfall,snow_depth&daily=weather_code,temperature_2m_max,temperature_2m_min,snowfall_sum&timezone=auto&forecast_days=4`;
     
     const response = await fetch(url);
     if (!response.ok) throw new Error('Weather data unavailable');
@@ -110,6 +138,88 @@ function renderCurrent(data) {
             <span>💨 ${Math.round(current.wind_speed_10m)} km/h</span>
         </div>
     `;
+}
+
+// Render snow conditions
+function renderSnow(data) {
+    const current = data.current;
+    const daily = data.daily;
+    const snowContainer = document.getElementById('snow');
+    
+    const currentSnowfall = current.snowfall || 0; // cm/hour
+    const snowDepth = current.snow_depth || 0; // meters
+    const snowDepthCm = (snowDepth * 100).toFixed(0); // convert to cm
+    
+    // Check if there will be snow in the forecast
+    const futureSnow = [];
+    for (let i = 1; i <= 3; i++) {
+        const snowfall = daily.snowfall_sum[i] || 0;
+        if (snowfall > 0) {
+            const date = new Date(daily.time[i]);
+            futureSnow.push({
+                day: shortDayNames[date.getDay()],
+                amount: snowfall.toFixed(1)
+            });
+        }
+    }
+    
+    // Determine if snowing now
+    const isSnowing = currentSnowfall > 0;
+    const snowIntensity = currentSnowfall > 2 ? 'Heavy' : currentSnowfall > 0.5 ? 'Moderate' : currentSnowfall > 0 ? 'Light' : 'No';
+    
+    // Only show snow section if there's relevant snow info
+    const hasSnowInfo = isSnowing || snowDepth > 0 || futureSnow.length > 0;
+    
+    if (!hasSnowInfo) {
+        snowContainer.style.display = 'none';
+        return;
+    }
+    
+    snowContainer.style.display = 'block';
+    
+    let snowHTML = `
+        <div class="snow-header">
+            <span class="snow-icon">❄️</span>
+            <h2>Snow Conditions</h2>
+        </div>
+        <div class="snow-grid">
+            <div class="snow-item">
+                <span class="snow-label">Currently Snowing</span>
+                <span class="snow-value">${isSnowing ? 'Yes' : 'No'}</span>
+            </div>
+            <div class="snow-item">
+                <span class="snow-label">Intensity</span>
+                <span class="snow-value">${snowIntensity}${isSnowing ? ` (${currentSnowfall.toFixed(1)} cm/h)` : ''}</span>
+            </div>
+            <div class="snow-item">
+                <span class="snow-label">Snow Depth</span>
+                <span class="snow-value">${snowDepthCm > 0 ? snowDepthCm + ' cm' : 'None'}</span>
+            </div>
+            <div class="snow-item">
+                <span class="snow-label">Snow Expected</span>
+                <span class="snow-value">${futureSnow.length > 0 ? 'Yes' : 'No'}</span>
+            </div>
+        </div>
+    `;
+    
+    // Add forecast snow days if any
+    if (futureSnow.length > 0) {
+        snowHTML += `
+            <div class="snow-forecast">
+                <div class="snow-forecast-title">Upcoming Snowfall</div>
+                <div class="snow-forecast-days">
+                    ${futureSnow.map(s => `
+                        <div class="snow-day">
+                            <span>${s.day}:</span>
+                            <span class="snow-day-amount">${s.amount} cm</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    snowContainer.innerHTML = snowHTML;
 }
 
 // Render 3-day forecast
@@ -152,6 +262,7 @@ function showError(message) {
             <button onclick="init()">Try Again</button>
         </div>
     `;
+    document.getElementById('snow').style.display = 'none';
 }
 
 // Initialize app
@@ -159,6 +270,7 @@ async function init() {
     try {
         document.getElementById('current').innerHTML = '<div class="loader"></div>';
         document.getElementById('forecast').innerHTML = '';
+        document.getElementById('snow').style.display = 'none';
         document.getElementById('location').textContent = 'Detecting location...';
         
         const coords = await getLocation();
@@ -169,6 +281,7 @@ async function init() {
         
         document.getElementById('location').textContent = locationName;
         renderCurrent(weather);
+        renderSnow(weather);
         renderForecast(weather);
     } catch (error) {
         console.error(error);
@@ -180,5 +293,9 @@ async function init() {
     }
 }
 
+// Setup theme toggle
+document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
 // Start
+initTheme();
 init();

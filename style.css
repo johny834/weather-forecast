@@ -15,6 +15,22 @@
     --radius-sm: 12px;
     --radius-md: 20px;
     --radius-lg: 28px;
+    --snow-accent: #7dd3fc;
+    --snow-bg: rgba(125, 211, 252, 0.1);
+}
+
+/* Light Mode */
+[data-theme="light"] {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #f1f5f9;
+    --bg-card: rgba(255, 255, 255, 0.8);
+    --bg-card-hover: rgba(255, 255, 255, 0.95);
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --shadow-soft: 0 4px 24px rgba(0, 0, 0, 0.08);
+    --snow-bg: rgba(56, 189, 248, 0.15);
 }
 
 * {
@@ -30,6 +46,7 @@ body {
     min-height: 100vh;
     min-height: 100dvh;
     line-height: 1.5;
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 .container {
@@ -48,6 +65,14 @@ header {
     margin-bottom: 32px;
 }
 
+.header-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    position: relative;
+}
+
 header h1 {
     font-size: 1.75rem;
     font-weight: 600;
@@ -62,6 +87,29 @@ header h1 {
     font-size: 0.9rem;
     color: var(--text-secondary);
     font-weight: 400;
+}
+
+/* Theme Toggle */
+.theme-toggle {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--bg-card);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.theme-toggle:hover {
+    background: var(--bg-card-hover);
+    transform: translateY(-50%) scale(1.05);
+}
+
+.theme-icon {
+    font-size: 1.1rem;
 }
 
 /* Current Weather Card */
@@ -80,6 +128,7 @@ header h1 {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    transition: background 0.3s ease, border 0.3s ease, box-shadow 0.3s ease;
 }
 
 .weather-icon {
@@ -115,6 +164,93 @@ header h1 {
     gap: 6px;
 }
 
+/* Snow Conditions */
+.snow-conditions {
+    background: var(--snow-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    transition: background 0.3s ease, border 0.3s ease;
+}
+
+.snow-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.snow-header h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.snow-icon {
+    font-size: 1.5rem;
+}
+
+.snow-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.snow-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.snow-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.snow-value {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.snow-forecast {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--glass-border);
+}
+
+.snow-forecast-title {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+}
+
+.snow-forecast-days {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.snow-day {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.snow-day-amount {
+    color: var(--snow-accent);
+    font-weight: 500;
+}
+
 /* Forecast Section */
 .forecast {
     display: flex;
@@ -133,7 +269,7 @@ header h1 {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    transition: background 0.2s ease, transform 0.2s ease;
+    transition: background 0.2s ease, transform 0.2s ease, border 0.3s ease;
 }
 
 .forecast-card:hover {
@@ -262,5 +398,9 @@ footer a:hover {
     .forecast-temps {
         flex-direction: column;
         gap: 4px;
+    }
+    
+    .snow-grid {
+        grid-template-columns: repeat(4, 1fr);
     }
 }
